@@ -1,0 +1,58 @@
+# Database
+dbdata:
+  image: postgres:latest
+  volumes:
+    - /var/lib/postgresql
+  command: true
+
+db:
+  image: aidanlister/postgres-hstore
+  volumes_from:
+    - dbdata
+  ports:
+    - "5432"
+
+# Redis
+redisdata:
+  image: redis:latest
+  volumes:
+    - /var/lib/redis
+  command: true
+
+redis:
+  image: redis:latest
+  volumes_from:
+    - redisdata
+  ports:
+    - "6379"
+
+# Web and workers
+web:
+  build: .
+  command: python manage.py runserver 0.0.0.0:8000
+  volumes:
+    - .:/usr/src/app/
+  ports:
+    - "8000:8000"
+  links:
+    - db
+    - redis
+  environment:
+    - INSTANCE_TYPE=web
+    - DEBUG=1
+    - DJANGO_SETTINGS_MODULE=abas.settings.local
+    - DATABASE_URL=postgres://postgres@db/postgres
+
+worker:
+  build: .
+  command: python manage.py rqworker
+  links:
+    - db
+    - redis
+  volumes:
+    - .:/usr/src/app/
+  environment:
+    - INSTANCE_TYPE=worker
+    - DEBUG=1
+    - DJANGO_SETTINGS_MODULE=abas.settings.local
+    - DATABASE_URL=postgres://postgres@db/postgres

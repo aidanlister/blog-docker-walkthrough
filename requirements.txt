@@ -1,0 +1,6 @@
+Django==1.7.1
+django-rq==0.7.0
+psycopg2==2.5.2
+redis==2.10.1
+requests==2.4.3
+rq==0.4.6
